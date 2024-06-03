@@ -5,22 +5,22 @@ import { Link, useNavigate } from 'react-router-dom';
 const LoginPage = () => {
   const [personalEmail, setPersonalEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // State to handle errors
+  const [error, setError] = useState(''); 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/users/login', { email:personalEmail, password:password });
+      const res = await axios.post('http://localhost:5000/api/users/login', { email: personalEmail, password: password });
       console.log(res.data);
       if (res.data.user.accessLevel === 'DomainHead') {
         navigate('/domain-head');
       } else {
-        navigate('/email-request');
+        navigate('/email-request', { state: { userEmail: personalEmail } }); 
       }
     } catch (err) {
       console.error(err.response.data);
-      setError(err.response.data.message || 'An error occurred'); // Set error message
+      setError(err.response.data.message || 'An error occurred'); 
     }
   };
 
@@ -31,7 +31,7 @@ const LoginPage = () => {
           <div className="card">
             <div className="card-body">
               <h2 className="card-title text-center">Login</h2>
-              {error && <p className="text-danger">{error}</p>} {/* Display error message */}
+              {error && <p className="text-danger">{error}</p>} 
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label htmlFor="email">Email</label>
