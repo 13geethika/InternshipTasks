@@ -10,14 +10,20 @@ const DomainHeadPage = () => {
     const fetchApplications = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/applications/emailreq');
-        setApplications(res.data);
+        console.log('Response data:', res.data); 
+        if (Array.isArray(res.data)) {
+          setApplications(res.data);
+        } else {
+          console.error('Error: Response data is not an array');
+        }
       } catch (err) {
         console.error(err.response ? err.response.data : 'Error fetching applications');
       }
     };
-
+  
     fetchApplications();
   }, []);
+  
 
   const handleUpdateStatus = async (id, status) => {
     try {
