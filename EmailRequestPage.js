@@ -1,33 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import EmailForm from './EmailForm';
+
 const EmailRequestPage = () => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [domain, setDomain] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const { userEmail } = useLocation().state; 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [statusUpdate, setStatusUpdate] = useState('');
   const navigate = useNavigate();
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+
+  const fetchApplicationStatus = async () => {
+    try {
+      console.log(userEmail);
+      const res = await axios.get('http://localhost:5000/api/applications/emailreq', {
+        params: { personalEmail: userEmail }
+      });
+      console.log(res.data, "hello");
+      const applications = res.data;
+      const submittedApplication = applications.find(application => application.submit);
+      if (submittedApplication) {
+        setSubmitted(true);
+        setStatusUpdate(submittedApplication.status);
+        localStorage.setItem('applicationStatus', submittedApplication.status); 
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Failed to fetch application status');
+    }
+  };
+
+  useEffect(() => {
+    const storedStatus = localStorage.getItem('applicationStatus');
+    if (storedStatus) {
+      setSubmitted(true);
+      setStatusUpdate(storedStatus);
+    } else if (userEmail) {
+      fetchApplicationStatus();
+    }
+  }, [userEmail]);
+
+  const handleSubmit = async (formData) => {
     setError('');
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/applications/emailreq', { firstName, lastName, domain, phoneNumber });
+      const res = await axios.post('http://localhost:5000/api/applications/emailreq', formData);
       console.log(res.data);
-      setSubmitted(true);
+      if (res.data && res.data.application && res.data.application.submit) {
+        
+        setSubmitted(true);
+        setStatusUpdate(res.data.application.status); 
+        localStorage.setItem('applicationStatus', res.data.application.status); 
+      }
     } catch (err) {
-      console.error(err.response.data);
-      setError(err.response.data.message || 'An error occurred');
+      console.error(err);
+      setError('An error occurred');
     } finally {
       setLoading(false);
     }
   };
-  
 
   const handleExit = () => {
+    localStorage.removeItem('applicationStatus'); 
     navigate('/login');
   };
 
@@ -40,64 +75,11 @@ const EmailRequestPage = () => {
               <h2 className="card-title text-center">Request Email</h2>
               {submitted ? (
                 <div>
-                  <p>Your application is submitted and is under verification.</p>
+                  <p>Your application is submitted and it is {statusUpdate}.</p>
                   <button className="btn btn-primary btn-block mt-3" onClick={handleExit}>Exit</button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit}>
-                  <div className="form-group">
-                    <label htmlFor="firstName">First Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="firstName"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Enter first name"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="lastName">Last Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="lastName"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Enter last name"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="domain">Domain</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="domain"
-                      value={domain}
-                      onChange={(e) => setDomain(e.target.value)}
-                      placeholder="Enter domain"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="phoneNumber">Phone Number</label>
-                    <input
-                      type="tel"
-                      className="form-control"
-                      id="phoneNumber"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="Enter phone number"
-                      required
-                    />
-                  </div>
-                  <button type="submit" className="btn btn-primary btn-block mt-3" disabled={loading}>
-                    {loading ? 'Submitting...' : 'Submit'}
-                  </button>
-                  {error && <p className="text-danger mt-3">{error}</p>}
-                </form>
+                <EmailForm onSubmit={handleSubmit} loading={loading} error={error} />
               )}
             </div>
           </div>
