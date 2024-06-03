@@ -3,7 +3,6 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
-// Register user
 router.post('/register', async (req, res) => {
   const { firstName, lastName, phoneNumber, personalEmail, domain, password } = req.body;
 
@@ -24,7 +23,7 @@ router.post('/register', async (req, res) => {
       personalEmail,
       domain,
       password,
-      accessLevel // Set access level based on email
+      accessLevel 
     });
 
     await newUser.save();
@@ -39,11 +38,11 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    let accessLevel = 'Employee'; // Default access level
+    let accessLevel = 'Employee'; 
     if (email === 'geethika.bodapati@gmail.com') {
       accessLevel = 'DomainHead';
       res.send({ user: { accessLevel: accessLevel } });
-    } else if (await User.findOne({ personalEmail: email })) { // Moved inside try block
+    } else if (await User.findOne({ personalEmail: email })) { 
       console.log("Login successful");
       res.send({ user: { accessLevel: accessLevel } });
     } else {
@@ -55,10 +54,10 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Get user data for domain head verification
+// Getting user data for domain head verification
 router.get('/users', async (req, res) => {
   try {
-    const users = await User.find({ domain: req.body.domain }); // Adjust domain filter as needed
+    const users = await User.find({ domain: req.body.domain }); 
     res.json(users);
   } catch (err) {
     console.error(err.message);
